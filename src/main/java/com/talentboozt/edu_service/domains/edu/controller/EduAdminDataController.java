@@ -1,0 +1,53 @@
+package com.talentboozt.edu_service.domains.edu.controller;
+
+import com.talentboozt.edu_service.domains.edu.service.EduDataService;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/edu/admin/data")
+@RequiredArgsConstructor
+public class EduAdminDataController {
+
+    private final EduDataService dataService;
+
+    @GetMapping("/collections")
+    @PreAuthorize("hasAuthority('PLATFORM_ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getCollections() {
+        return ResponseEntity.ok(dataService.listAvailableCollections());
+    }
+
+    @GetMapping("/export/{collection}")
+    @PreAuthorize("hasAuthority('PLATFORM_ADMIN')")
+    public ResponseEntity<byte[]> exportCollection(
+            @PathVariable String collection,
+            @RequestParam(defaultValue = "json") String format) {
+
+        String content;
+        String filename = "export_" + collection + "_" + System.currentTimeMillis();
+        MediaType mediaType;
+
+        if ("csv".equalsIgnoreCase(format)) {
+            content = dataService.exportCollectionToCsv(collection);
+            filename += ".csv";
+            mediaType = MediaType.parseMediaType("text/csv");
+        } else {
+            content = dataService.exportCollectionToJson(collection);
+            filename += ".json";
+            mediaType = MediaType.APPLICATION_JSON;
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(mediaType)
+                .body(content.getBytes());
+    }
+}

@@ -1,0 +1,12 @@
+package com.talentboozt.edu_service.domains.edu.dto.monetization;
+
+import lombok.Data;
+import java.util.List;
+
+@Data
+public class MultiCourseCheckoutRequest {
+    private String userId;
+    private List<String> courseIds;
+    /** Optional coupon code to apply at checkout */
+    private String couponCode;
+}

@@ -1,0 +1,19 @@
+package com.talentboozt.edu_service.domains.edu.dto.analytics;
+
+import lombok.Builder;
+import lombok.Data;
+import java.util.Map;
+
+@Data
+@Builder
+public class CreatorAnalyticsDTO {
+    private String creatorId;
+    private Double totalRevenue;
+    private Integer totalEnrollments;
+    private Integer currentMonthEnrollments;
+    private Double averageCompletionRate;
+    private Map<String, Integer> courseViews;
+    private Map<String, Double> monthlyRevenueTimeline;
+    private Double revenueTrendPercent;
+    private Double enrollmentTrendPercent;
+}

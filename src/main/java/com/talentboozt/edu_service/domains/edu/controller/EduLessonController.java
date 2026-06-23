@@ -1,0 +1,70 @@
+package com.talentboozt.edu_service.domains.edu.controller;
+
+import jakarta.validation.Valid;
+import com.talentboozt.edu_service.domains.edu.dto.course.LessonRequest;
+import com.talentboozt.edu_service.domains.edu.dto.course.OrderUpdateRequest;
+import com.talentboozt.edu_service.domains.edu.model.ELessons;
+import com.talentboozt.edu_service.domains.edu.service.EduLessonService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import com.talentboozt.edu_service.shared.security.annotations.AuthenticatedUser;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/edu/courses/{courseId}/sections/{sectionId}/lessons")
+public class EduLessonController {
+
+    private final EduLessonService lessonService;
+
+    public EduLessonController(EduLessonService lessonService) {
+        this.lessonService = lessonService;
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE')")
+    public ResponseEntity<ELessons> createLesson(
+            @PathVariable String courseId,
+            @PathVariable String sectionId,
+            @AuthenticatedUser String creatorId,
+            @Valid @RequestBody LessonRequest request) {
+        return ResponseEntity.ok(lessonService.createLesson(courseId, sectionId, creatorId, request));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ELessons>> getLessons(@PathVariable String sectionId) {
+        return ResponseEntity.ok(lessonService.getLessonsBySectionId(sectionId));
+    }
+
+    @GetMapping("/{lessonId}")
+    public ResponseEntity<ELessons> getLesson(@PathVariable String lessonId) {
+        return ResponseEntity.ok(lessonService.getLessonById(lessonId));
+    }
+
+    @PutMapping("/{lessonId}")
+    @PreAuthorize("hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE')")
+    public ResponseEntity<ELessons> updateLesson(
+            @PathVariable String courseId,
+            @PathVariable String sectionId,
+            @PathVariable String lessonId, 
+            @Valid @RequestBody LessonRequest request) {
+        return ResponseEntity.ok(lessonService.updateLesson(lessonId, request));
+    }
+
+    @PutMapping("/reorder")
+    @PreAuthorize("hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE')")
+    public ResponseEntity<Void> reorderLessons(
+            @PathVariable String sectionId, 
+            @Valid @RequestBody OrderUpdateRequest request) {
+        lessonService.reorderLessons(sectionId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{lessonId}")
+    @PreAuthorize("hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE')")
+    public ResponseEntity<Void> deleteLesson(@PathVariable String lessonId) {
+        lessonService.deleteLesson(lessonId);
+        return ResponseEntity.noContent().build();
+    }
+}

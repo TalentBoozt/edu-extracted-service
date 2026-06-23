@@ -1,0 +1,14 @@
+package com.talentboozt.edu_service.domains.edu.repository.mongodb;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import com.talentboozt.edu_service.domains.edu.model.EPayouts;
+import java.util.List;
+import java.time.Instant;
+
+@Repository
+public interface EPayoutsRepository extends MongoRepository<EPayouts, String> {
+    List<EPayouts> findByCreatorId(String creatorId);
+    long countByCreatorIdAndRequestedAtAfter(String creatorId, Instant date);
+}

@@ -1,0 +1,134 @@
+package com.talentboozt.edu_service.domains.edu.controller;
+
+import jakarta.validation.Valid;
+import com.talentboozt.edu_service.domains.edu.dto.workspace.LearningPathRequest;
+import com.talentboozt.edu_service.domains.edu.dto.workspace.WorkspaceMemberDTO;
+import com.talentboozt.edu_service.domains.edu.dto.workspace.WorkspaceRequest;
+import com.talentboozt.edu_service.domains.edu.enums.ERoles;
+import com.talentboozt.edu_service.domains.edu.model.ELearningPaths;
+import com.talentboozt.edu_service.domains.edu.model.EWorkspaces;
+import com.talentboozt.edu_service.domains.edu.service.EduLearningPathService;
+import com.talentboozt.edu_service.domains.edu.service.EduWorkspaceMemberService;
+import com.talentboozt.edu_service.domains.edu.service.EduWorkspaceService;
+import com.talentboozt.edu_service.domains.edu.service.EduWorkspaceGuardService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/edu/workspaces")
+public class EduWorkspaceController {
+
+    private final EduWorkspaceService workspaceService;
+    private final EduWorkspaceMemberService memberService;
+    private final EduLearningPathService pathService;
+    private final EduWorkspaceGuardService guardService;
+
+    public EduWorkspaceController(EduWorkspaceService workspaceService,
+                                  EduWorkspaceMemberService memberService,
+                                  EduLearningPathService pathService,
+                                  EduWorkspaceGuardService guardService) {
+        this.workspaceService = workspaceService;
+        this.memberService = memberService;
+        this.pathService = pathService;
+        this.guardService = guardService;
+    }
+
+    // Workspaces 
+
+    @PostMapping("/owner/{ownerId}")
+    @PreAuthorize("hasAuthority('ENTERPRISE_ADMIN') or hasAuthority('SELLER_FREE')")
+    public ResponseEntity<EWorkspaces> createWorkspace(
+            @PathVariable String ownerId,
+            @Valid @RequestBody WorkspaceRequest request) {
+        return ResponseEntity.ok(workspaceService.createWorkspace(ownerId, request));
+    }
+
+    @GetMapping("/{workspaceId}")
+    @PreAuthorize("hasAuthority('LEARNER') or hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<EWorkspaces> getWorkspace(@PathVariable String workspaceId,
+                                                    @RequestParam(required = false) String userId) {
+        if (userId == null) {
+            userId = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        guardService.enforceMembership(workspaceId, userId);
+        return ResponseEntity.ok(workspaceService.getWorkspaceById(workspaceId));
+    }
+
+    @GetMapping("/owner/{ownerId}")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<List<EWorkspaces>> getWorkspacesByOwner(@PathVariable String ownerId) {
+        return ResponseEntity.ok(workspaceService.getWorkspacesByOwner(ownerId));
+    }
+
+    @GetMapping("/resolve/{slug}")
+    public ResponseEntity<EWorkspaces> resolveWorkspace(@PathVariable String slug) {
+        return ResponseEntity.ok(workspaceService.getWorkspaceBySlug(slug));
+    }
+
+    // Members
+
+    @PostMapping("/{workspaceId}/members/{userId}")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<WorkspaceMemberDTO> addMember(
+            @PathVariable String workspaceId,
+            @PathVariable String userId,
+            @RequestParam(required = false) ERoles role,
+            @RequestParam String inviterId) {
+        return ResponseEntity.ok(memberService.addMember(workspaceId, userId, role, inviterId));
+    }
+
+    @PostMapping("/{workspaceId}/members/bulk")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<Void> bulkImportMembers(
+            @PathVariable String workspaceId,
+            @Valid @RequestBody List<String> userIds,
+            @RequestParam String inviterId) {
+        memberService.bulkImportMembers(workspaceId, userIds, inviterId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{workspaceId}/members")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<List<WorkspaceMemberDTO>> getMembers(@PathVariable String workspaceId,
+                                                               @RequestParam(required = false) String userId) {
+        if (userId == null) {
+            userId = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        guardService.enforceMembership(workspaceId, userId);
+        return ResponseEntity.ok(memberService.getMembers(workspaceId));
+    }
+
+    @DeleteMapping("/{workspaceId}/members/{userId}")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<Void> removeMember(
+            @PathVariable String workspaceId,
+            @PathVariable String userId) {
+        memberService.removeMember(workspaceId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Learning Paths
+
+    @PostMapping("/{workspaceId}/paths")
+    @PreAuthorize("hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<ELearningPaths> createPath(
+            @PathVariable String workspaceId,
+            @RequestParam String creatorId,
+            @Valid @RequestBody LearningPathRequest request) {
+        return ResponseEntity.ok(pathService.createPath(workspaceId, creatorId, request));
+    }
+
+    @GetMapping("/{workspaceId}/paths")
+    @PreAuthorize("hasAuthority('LEARNER') or hasAuthority('ENTERPRISE_INSTRUCTOR') or hasAuthority('SELLER_FREE') or hasAuthority('ENTERPRISE_ADMIN')")
+    public ResponseEntity<List<ELearningPaths>> getWorkspacePaths(@PathVariable String workspaceId,
+                                                                  @RequestParam(required = false) String userId) {
+        if (userId == null) {
+            userId = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        guardService.enforceMembership(workspaceId, userId);
+        return ResponseEntity.ok(pathService.getWorkspacePaths(workspaceId));
+    }
+}

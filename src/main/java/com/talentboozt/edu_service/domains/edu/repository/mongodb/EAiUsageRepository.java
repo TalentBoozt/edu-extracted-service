@@ -1,0 +1,15 @@
+package com.talentboozt.edu_service.domains.edu.repository.mongodb;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import com.talentboozt.edu_service.domains.edu.model.EAiUsage;
+import java.util.List;
+
+import java.time.Instant;
+
+@Repository
+public interface EAiUsageRepository extends MongoRepository<EAiUsage, String> {
+    List<EAiUsage> findByUserId(String userId);
+    long countByUserIdAndCreatedAtGreaterThanEqual(String userId, Instant since);
+}

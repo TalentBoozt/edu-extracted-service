@@ -1,0 +1,22 @@
+package com.talentboozt.edu_service.domains.edu.dto.plan;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class LimitConfig {
+    private int maxCourses;
+    private int aiCreditsPerMonth;
+    private int maxAiGenerationsPerMonth;
+    private int validationCreditsPerMonth;
+    private int hourlyAiLimit;
+    private int dailyAiLimit;
+    private double commissionRate;
+    private List<String> features;
+}
