@@ -24,7 +24,7 @@ public class EduJwtService {
     @Value("${jwt-cookie.type:Lax}")
     private String cookieType;
 
-    @Value("${jwt-cookie.secure:false}")
+    @Value("${jwt-cookie.secure:true}")
     private boolean isSecure;
 
     @Value("${jwt-cookie.domain:talnova.io}")
@@ -59,17 +59,23 @@ public class EduJwtService {
 
     public ResponseCookie getCleanAccessTokenCookie() {
         return ResponseCookie.from("edu_access_token", null)
+                .httpOnly(true)
+                .secure(isSecure)
                 .path("/")
                 .domain(cookieDomain)
                 .maxAge(0)
+                .sameSite(cookieType)
                 .build();
     }
 
     public ResponseCookie getCleanRefreshTokenCookie() {
         return ResponseCookie.from("edu_refresh_token", null)
+                .httpOnly(true)
+                .secure(isSecure)
                 .path("/")
                 .domain(cookieDomain)
                 .maxAge(0)
+                .sameSite(cookieType)
                 .build();
     }
 
@@ -137,5 +143,27 @@ public class EduJwtService {
 
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
+    }
+
+    public String extractTokenFromHeaderOrCookie(jakarta.servlet.http.HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
+
+        String queryParamToken = request.getParameter("token");
+        if (queryParamToken != null && !queryParamToken.isEmpty()) {
+            return queryParamToken;
+        }
+
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("edu_access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }
