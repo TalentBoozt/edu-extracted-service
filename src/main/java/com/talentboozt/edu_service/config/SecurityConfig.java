@@ -19,6 +19,12 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final com.talentboozt.edu_service.shared.security.cfg.JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(com.talentboozt.edu_service.shared.security.cfg.JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -34,7 +40,8 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 // All others require authentication
                 .anyRequest().permitAll() // TODO: Enable auth after JWT filter integration
-            );
+            )
+            .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -7,6 +7,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    private final com.talentboozt.edu_service.shared.security.cfg.AuthenticatedUserResolver authenticatedUserResolver;
+
+    public WebConfig(com.talentboozt.edu_service.shared.security.cfg.AuthenticatedUserResolver authenticatedUserResolver) {
+        this.authenticatedUserResolver = authenticatedUserResolver;
+    }
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -15,5 +21,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addArgumentResolvers(java.util.List<org.springframework.web.method.support.HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(authenticatedUserResolver);
     }
 }
